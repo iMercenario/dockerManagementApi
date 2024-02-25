@@ -1,0 +1,89 @@
+/.phpunit.cache
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+/.fleet
+/.idea
+/.vscode
+
+# Laravel specific
+/vendor/
+/node_modules/
+public/storage
+storage/*.key
+storage/debugbar/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/testing/
+storage/framework/views/
+storage/logs/
+bootstrap/cache/
+
+# Laravel environment file
+.env
+
+# Laravel local development file
+.env.example
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node
+npm-debug.log
+yarn-error.log
+
+# Logs
+*.log
+*.sql
+*.sqlite
+
+# PHP server
+.phpunit.result.cache
+
+# Exported databases
+*.sql.gz
+*.sql.zip
+
+# Config files
+*.conf
+*.config
+*.cfg
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*.bak
+*.cache
+*.sav
+
+# Other
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+*.gz
+*.bzip2
+*.xz
+*.lzma
+*.sz
