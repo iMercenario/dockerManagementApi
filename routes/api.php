@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DockerCommandController;
 use App\Http\Controllers\TranslationModelController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -29,3 +30,10 @@ Route::delete('/translation-model/{id}', [TranslationModelController::class, 'de
 Route::post('/translation-model/{id}', [TranslationModelController::class, 'updateModel']);
 Route::get('/translation-models', [TranslationModelController::class, 'index']);
 Route::get('/translation-model/{id}', [TranslationModelController::class, 'show']);
+
+/*
+|--------------------------------------------------------------------------
+| General routes
+|--------------------------------------------------------------------------
+*/
+Route::post('/execute', [DockerCommandController::class, 'executeCommand']);
