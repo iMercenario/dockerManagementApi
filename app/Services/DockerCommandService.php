@@ -8,9 +8,11 @@ use Symfony\Component\Process\Process;
 
 class DockerCommandService
 {
-    public function translateCommand(string $text)
+    public const WORKING_DIRECTORY = 'app/data';
+
+    public function translateCommand(string $text): string
     {
-        // Отримання активної моделі перекладу (припустимо, що цей код вже написаний)
+        // Отримання активної моделі перекладу
         $activeModel = TranslationModel::where('is_active', true)->firstOrFail();
         $modelPath = $activeModel->path; // Шлях до активної моделі
         $modelPath = storage_path("app/" . $modelPath);
@@ -22,12 +24,23 @@ class DockerCommandService
         $process = new Process(['python3', $scriptPath, $modelPath, $text]);
         $process->run();
 
-        // Перевірка на помилки
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
 
-        // Повернення результату перекладу
         return trim($process->getOutput());
+    }
+
+    public function executeCommand(string $command): array
+    {
+        $process = new Process(explode(' ', $command));
+        $process->setWorkingDirectory(storage_path(self::WORKING_DIRECTORY));
+        $process->run();
+
+        return [
+            'success' => $process->isSuccessful(),
+            'output' => $process->getOutput(),
+            'error' => $process->isSuccessful() ? null : $process->getErrorOutput(),
+        ];
     }
 }
