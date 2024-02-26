@@ -11,7 +11,7 @@ class DockerCommandService
 {
     public const WORKING_DIRECTORY = 'app/data';
 
-    public const CORRECTION_ATTEMPTS = 10;
+    public const CORRECTION_ATTEMPTS = 20;
 
     private ChatGPTService $chatGPTService;
 
@@ -33,38 +33,47 @@ class DockerCommandService
             throw new Exception('Correction attempts exceeded');
         }
 
+        $isValid = $this->chatGPTService->validateCommand($originalCommand, $command);
+
         //@todo прибрати try/catch та $error
         $error = false;
 
-
-        try {
-            $process = new Process(explode(' ', $command));
-            $process->setWorkingDirectory(storage_path(self::WORKING_DIRECTORY));
-            $process->run();
-        } catch (Exception $e) {
-            $error = true;
+        if ($isValid) {
+            try {
+                $process = new Process(explode(' ', $command));
+                $process->setWorkingDirectory(storage_path(self::WORKING_DIRECTORY));
+                $process->run();
+            } catch (Exception $e) {
+                $error = $e->getMessage();
+            }
         }
 
+        if (!$isValid  || $error || !$process->isSuccessful()) {
 
-        if (!$process->isSuccessful() || $error) {
-            $translatedCommand = $this->chatGPTService->correctCommand(
+            if (isset($process) && $process->getErrorOutput()) {
+                $error = $process->getErrorOutput();
+            }
+
+            $command = $this->chatGPTService->correctCommand(
                 $originalCommand,
                 $command,
-                $process->getErrorOutput()
+                $error
             );
 
-            if (str_contains('error: ', $translatedCommand)) {
-                throw new Exception($translatedCommand);
+            if (str_contains('error: ', $command)) {
+                throw new Exception($command);
             }
 
             return $this->executeCommand(
-                $translatedCommand,
+                $command,
                 $originalCommand,
                 $iteration + 1
             );
         }
 
         return [
+            'original_command' => $originalCommand,
+            'translated_command' => $command,
             'success' => $process->isSuccessful(),
             'output' => $process->getOutput(),
             'error' => $process->isSuccessful() ? null : $process->getErrorOutput(),

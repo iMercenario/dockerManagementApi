@@ -23,9 +23,6 @@ class DockerCommandController extends Controller
             ];
         }
 
-        return response()->json([
-            'translated_command' => $translatedCommand,
-            'output' => $output,
-        ]);
+        return response()->json($output);
     }
 }
