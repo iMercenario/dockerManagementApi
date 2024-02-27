@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ChatGPTService;
 use App\Services\DockerCommandService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

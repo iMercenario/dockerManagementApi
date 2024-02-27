@@ -40,7 +40,8 @@ class DockerCommandService
 
         if ($isValid) {
             try {
-                $process = new Process(explode(' ', $command));
+//                $process = new Process(explode(' ', $command));
+                $process = new Process(['bash', '-c', $command]);
                 $process->setWorkingDirectory(storage_path(self::WORKING_DIRECTORY));
                 $process->run();
             } catch (Exception $e) {
