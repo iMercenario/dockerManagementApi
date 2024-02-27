@@ -15,9 +15,12 @@ class DockerCommandService
 
     private ChatGPTService $chatGPTService;
 
-    public function __construct(ChatGPTService $chatGPTService)
+    private DataCollectionService $dataCollectionService;
+
+    public function __construct(ChatGPTService $chatGPTService, DataCollectionService $dataCollectionService)
     {
         $this->chatGPTService = $chatGPTService;
+        $this->dataCollectionService = $dataCollectionService;
     }
 
     /**
@@ -49,7 +52,7 @@ class DockerCommandService
             }
         }
 
-        if (!$isValid  || $error || !$process->isSuccessful()) {
+        if (!$isValid || $error || !$process->isSuccessful()) {
 
             if (isset($process) && $process->getErrorOutput()) {
                 $error = $process->getErrorOutput();
@@ -72,12 +75,23 @@ class DockerCommandService
             );
         }
 
+        if ($process->isSuccessful()) {
+            try {
+                $this->dataCollectionService->saveCommand($originalCommand, $command);
+            } catch (Exception $exception) {
+                $dataCollectionError = $exception->getMessage();
+            }
+        }
+
+
+
         return [
             'original_command' => $originalCommand,
             'translated_command' => $command,
             'success' => $process->isSuccessful(),
             'output' => $process->getOutput(),
             'error' => $process->isSuccessful() ? null : $process->getErrorOutput(),
+            'data_collection_error' => $dataCollectionError ?? null,
         ];
     }
 
