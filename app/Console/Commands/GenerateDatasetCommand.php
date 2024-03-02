@@ -2,13 +2,16 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Services\ChatGPTService;
+use Illuminate\Console\Command;
 use MongoDB\Client as MongoDB;
 
-class ExpandDatasetCommand extends Command
+/**
+ * Class GenerateDatasetCommand
+ */
+class GenerateDatasetCommand extends Command
 {
-    protected $signature = 'expand:dataset {inputDatabaseCollection} {outputDatabaseCollection}';
+    protected $signature = 'generate:dataset {inputDatabaseCollection} {outputDatabaseCollection}';
     protected $description = 'Розширює датасет для навчання моделі, використовуючи ChatGPT API';
 
     private ChatGPTService $chatGPTService;
@@ -21,6 +24,9 @@ class ExpandDatasetCommand extends Command
         $this->mongoDB = new MongoDB();
     }
 
+    /**
+     * Execute the console command.
+     */
     public function handle()
     {
         $inputCollectionName = $this->argument('inputDatabaseCollection');
@@ -42,25 +48,24 @@ class ExpandDatasetCommand extends Command
         foreach ($inputCollection->find() as $doc) {
 
             $inputCommand = $doc['input'];
-            $outputCommand = $doc['output'];
-
-            if (!empty($outputCollection->find(['input' => $inputCommand])->toArray()))
-            {
-                $this->warn('комманду ' . $inputCommand . ' вже було додано');
-                continue;
-            }
 
             sleep(1);
 
 
-            $validatedCommand = $this->validateAndGenerateCommand($inputCommand, $outputCommand);
+            $commands = $this->generateNewCommands($inputCommand);
 
-            if ($validatedCommand !== null) {
-                $outputCollection->insertOne([
-                    'input' => $inputCommand,
-                    'output' => $validatedCommand,
-                ]);
-                $this->info("Додано нову команду: $validatedCommand");
+
+            foreach ($commands as $command) {
+
+                $validatedCommand = $this->validateAndGenerateCommand($command, '');
+
+                if ($validatedCommand !== null && !empty($validatedCommand)) {
+                    $outputCollection->insertOne([
+                        'input' => $command,
+                        'output' => $validatedCommand,
+                    ]);
+                    $this->info("Додано нову команду: $validatedCommand");
+                }
             }
         }
     }
@@ -83,5 +88,12 @@ class ExpandDatasetCommand extends Command
             $newCommand = $this->chatGPTService->correctCommand($input, $output, '');
             return $this->validateAndGenerateCommand($input, $newCommand, $attempt + 1);
         }
+    }
+
+    protected function generateNewCommands($input)
+    {
+        $text = $this->chatGPTService->generateCommand($input);
+
+        return json_decode($text, true);
     }
 }
