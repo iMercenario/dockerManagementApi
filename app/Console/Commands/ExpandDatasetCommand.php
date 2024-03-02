@@ -26,15 +26,34 @@ class ExpandDatasetCommand extends Command
         $inputCollectionName = $this->argument('inputDatabaseCollection');
         $outputCollectionName = $this->argument('outputDatabaseCollection');
 
-        $inputCollection = $this->mongoDB->selectCollection(env('MONGO_DB_DATABASE'), $inputCollectionName);
-        $outputCollection = $this->mongoDB->selectCollection(env('MONGO_DB_DATABASE'), $outputCollectionName);
+        $input = [
+            'database' => explode('.', $inputCollectionName)[0],
+            'collection' => explode('.', $inputCollectionName)[1],
+        ];
 
-        $documents = $inputCollection->find();
+        $output = [
+            'database' => explode('.', $outputCollectionName)[0],
+            'collection' => explode('.', $outputCollectionName)[1],
+        ];
 
-        foreach ($documents as $doc) {
+        $inputCollection = $this->mongoDB->selectCollection($input['database'], $input['collection']);
+        $outputCollection = $this->mongoDB->selectCollection($output['database'], $output['collection']);
+
+        foreach ($inputCollection->find() as $doc) {
+
             $inputCommand = $doc['input'];
+            $outputCommand = $doc['output'];
 
-            $validatedCommand = $this->validateAndGenerateCommand($inputCommand);
+            if (!empty($outputCollection->find(['input' => $inputCommand])->toArray()))
+            {
+                $this->warn('комманду ' . $inputCommand . ' вже було додано');
+                continue;
+            }
+
+            sleep(1);
+
+
+            $validatedCommand = $this->validateAndGenerateCommand($inputCommand, $outputCommand);
 
             if ($validatedCommand !== null) {
                 $outputCollection->insertOne([
@@ -46,7 +65,7 @@ class ExpandDatasetCommand extends Command
         }
     }
 
-    protected function validateAndGenerateCommand($input, $attempt = 0)
+    protected function validateAndGenerateCommand($input, $output, $attempt = 0)
     {
         $maxAttempts = 5;
 
@@ -55,12 +74,12 @@ class ExpandDatasetCommand extends Command
             return null;
         }
 
-        $isValid = $this->chatGPTService->validateCommand($input);
+        $isValid = $this->chatGPTService->validateCommand($input, $output);
         if ($isValid) {
-            return $input;
+            return $output;
         } else {
-            $newCommand = $this->chatGPTService->generateCommand($input);
-            return $this->validateAndGenerateCommand($newCommand, $attempt + 1);
+            $newCommand = $this->chatGPTService->correctCommand($input, $output, '');
+            return $this->validateAndGenerateCommand($input, $newCommand, $attempt + 1);
         }
     }
 }
