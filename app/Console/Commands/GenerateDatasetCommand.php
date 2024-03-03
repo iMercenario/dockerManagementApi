@@ -49,7 +49,7 @@ class GenerateDatasetCommand extends Command
 
             $inputCommand = $doc['input'];
 
-            sleep(1);
+            sleep(3);
 
 
             $commands = $this->generateNewCommands($inputCommand);
@@ -72,7 +72,9 @@ class GenerateDatasetCommand extends Command
 
     protected function validateAndGenerateCommand($input, $output, $attempt = 0)
     {
-        $maxAttempts = 50;
+        sleep(10);
+
+        $maxAttempts = 10;
 
         $this->info("Attempt: {$attempt} Input: {$input} Output:{$output}\n")   ;
 
